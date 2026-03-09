@@ -9,11 +9,11 @@ import org.springframework.context.annotation.Configuration;
 
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "bot") //инджектит в филды класса значения из aplication пропертей с указан префиксом
+@ConfigurationProperties(prefix = "bot")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TelegramProperties {
 
-    //благодаря конфиг проперт по префиксу бот в значения ниже будут вставлены значения из пропертей
+
     String url;
     String token;
     String name;

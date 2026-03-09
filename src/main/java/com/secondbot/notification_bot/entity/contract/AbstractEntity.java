@@ -12,7 +12,7 @@ public abstract class AbstractEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    protected UUID id; //уникальный id
+    protected UUID id;
 
 
 }

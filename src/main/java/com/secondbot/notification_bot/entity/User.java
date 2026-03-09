@@ -42,7 +42,7 @@ public class User extends AbstractEntity {
     @Column(name = "current_notification_id")
     UUID currentNotification;
 
-    // Внутри класса User
+
     @PrePersist
     protected void onCreate() {
         if (this.registeredAt == null) {
