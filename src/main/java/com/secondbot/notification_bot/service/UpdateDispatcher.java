@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Service //аннотации сервис и компонент одно и то же
+@Service
 public class UpdateDispatcher {
     MessageHandler messageHandler;
     CommandHandler commandHandler;
