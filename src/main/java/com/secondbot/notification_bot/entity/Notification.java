@@ -1,0 +1,36 @@
+package com.secondbot.notification_bot.entity;
+
+
+import com.secondbot.notification_bot.entity.contract.AbstractEntity;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@Builder
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "notifications")
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class Notification extends AbstractEntity {
+
+    @Column(name = "title")
+    String title;
+
+    @Column(name = "description")
+    String description;
+
+    @Enumerated(EnumType.STRING)
+    Status status;
+
+    @Column(name = "time")
+    LocalDateTime sendAt;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    User user;
+}
