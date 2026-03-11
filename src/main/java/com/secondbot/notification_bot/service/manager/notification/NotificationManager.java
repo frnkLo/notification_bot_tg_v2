@@ -25,12 +25,19 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import static com.secondbot.notification_bot.data.CallbackData.*;
+import static com.secondbot.notification_bot.data.CallbackData.NOTIFICATION_NEW;
+import static com.secondbot.notification_bot.data.CallbackData.NOTIFICATION_BACK;
+import static com.secondbot.notification_bot.data.CallbackData.MAIN;
+import static com.secondbot.notification_bot.data.CallbackData.NOTIFICATION_EDIT_TITLE;
+import static com.secondbot.notification_bot.data.CallbackData.NOTIFICATION_EDIT_TIME;
+import static com.secondbot.notification_bot.data.CallbackData.NOTIFICATION_EDIT_D;
+import static com.secondbot.notification_bot.data.CallbackData.NOTIFICATION_DONE;
 
 @Slf4j
 @Service
@@ -38,6 +45,7 @@ import static com.secondbot.notification_bot.data.CallbackData.*;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class NotificationManager extends AbstractManager
         implements QueryListener, CommandListener, MessageListener {
+
     KeyboardFactory keyboardFactory;
     NotificationRepo notificationRepo;
     UserRepo userRepo;
@@ -68,7 +76,7 @@ public class NotificationManager extends AbstractManager
                         keyboardFactory.createInlineKeyboard(
                                 List.of("Добавить уведомление"),
                                 List.of(1),
-                                List.of(notification_new.name())
+                                List.of(NOTIFICATION_NEW.name())
                         )
                 )
                 .build();
@@ -130,7 +138,8 @@ public class NotificationManager extends AbstractManager
         if (pattern.matches()) {
             var nums = messageText.split(":");
             int seconds = Integer.parseInt(nums[0]) * 3600 + Integer.parseInt(nums[1]) * 60 + Integer.parseInt(nums[2]);
-            notification.setSeconds(seconds);
+            LocalDateTime futureTime = LocalDateTime.now().plusSeconds(seconds);
+            notification.setSendAt(futureTime);
         } else {
             return SendMessage.builder()
                     .text("Некорректный формат ввода\nЧЧ:ММ:СС (01:00:30 - один час, ноль минут, тридцать секунд)")
@@ -139,7 +148,7 @@ public class NotificationManager extends AbstractManager
                             keyboardFactory.createInlineKeyboard(
                                     List.of("\uD83D\uDD19 Назад"),
                                     List.of(1),
-                                    List.of(notification_back_ + String.valueOf(user.getCurrentNotification()))
+                                    List.of(NOTIFICATION_BACK + "_" + user.getCurrentNotification())
                             )
                     )
                     .build();
@@ -155,35 +164,35 @@ public class NotificationManager extends AbstractManager
         switch (words.length) {
             case 2 -> {
                 switch (words[1]) {
-                    case "main" -> {
+                    case "MAIN" -> {
                         return mainMenu(query, bot);
                     }
-                    case "new" -> {
+                    case "NEW" -> {
                         return newNotification(query, bot);
                     }
                 }
             }
             case 3 -> {
                 switch (words[1]) {
-                    case "back" -> {
+                    case "BACK" -> {
                         return editPage(query, words[2]);
                     }
-                    case "done" -> {
+                    case "DONE" -> {
                         return sendNotification(query, words[2], bot);
                     }
                 }
             }
             case 4 -> {
                 switch (words[1]) {
-                    case "edit" -> {
+                    case "EDIT" -> {
                         switch (words[2]) {
-                            case "title" -> {
+                            case "TITLE" -> {
                                 return askTitle(query, words[3]);
                             }
-                            case "d" -> {
+                            case "D" -> {
                                 return askDescription(query, words[3]);
                             }
-                            case "time" -> {
+                            case "TIME" -> {
                                 return askSeconds(query, words[3]);
                             }
                         }
@@ -196,7 +205,7 @@ public class NotificationManager extends AbstractManager
 
     private BotApiMethod<?> sendNotification(CallbackQuery query, String id, Bot bot) throws TelegramApiException {
         var notification = notificationRepo.findById(UUID.fromString(id)).orElseThrow();
-        if (notification.getTitle() == null  || notification.getTitle().isBlank() || notification.getSeconds() == null) {
+        if (notification.getTitle() == null  || notification.getTitle().isBlank() || notification.getSendAt() == null) {
             return AnswerCallbackQuery.builder()
                     .callbackQueryId(query.getId())
                     .text("Заполни обязательные значения: Заголовок и Время")
@@ -204,20 +213,13 @@ public class NotificationManager extends AbstractManager
         }
         bot.execute(
                 AnswerCallbackQuery.builder()
-                        .text("Уведомление придет через " + notification.getSeconds() + " секунд \uD83D\uDC40")
+                        .text("Уведомление придет через " + notification.getSendAt() + " секунд \uD83D\uDC40")
                         .callbackQueryId(query.getId())
                         .build()
         );
         notification.setStatus(Status.WAITING);
         notificationRepo.save(notification);
-        Thread.startVirtualThread(
-                new NotificationContainer(
-                        bot,
-                        query.getMessage().getChatId(),
-                        notification,
-                        notificationRepo
-                )
-        );
+
         return EditMessageText.builder()
                 .text("✅ Успешно")
                 .chatId(query.getMessage().getChatId())
@@ -226,7 +228,7 @@ public class NotificationManager extends AbstractManager
                         keyboardFactory.createInlineKeyboard(
                                 List.of("На главную"),
                                 List.of(1),
-                                List.of(main.name())
+                                List.of(MAIN.name())
 
                         )
                 )
@@ -255,7 +257,7 @@ public class NotificationManager extends AbstractManager
                         keyboardFactory.createInlineKeyboard(
                                 List.of("\uD83D\uDD19 Назад"),
                                 List.of(1),
-                                List.of(notification_back_ + id)
+                                List.of(NOTIFICATION_BACK + "_" + id)
                         )
                 )
                 .build();
@@ -274,7 +276,7 @@ public class NotificationManager extends AbstractManager
                         keyboardFactory.createInlineKeyboard(
                                 List.of("\uD83D\uDD19 Назад"),
                                 List.of(1),
-                                List.of(notification_back_ + id)
+                                List.of(NOTIFICATION_BACK + "_" + id)
                         )
                 )
                 .build();
@@ -293,7 +295,7 @@ public class NotificationManager extends AbstractManager
                         keyboardFactory.createInlineKeyboard(
                                 List.of("\uD83D\uDD19 Назад"),
                                 List.of(1),
-                                List.of(notification_back_ + id)
+                                List.of(NOTIFICATION_BACK + "_" + id)
                         )
                 )
                 .build();
@@ -324,7 +326,7 @@ public class NotificationManager extends AbstractManager
         } else {
             text.add("❌ Заголовок");
         }
-        if (notification.getSeconds() != null && notification.getSeconds() != 0) {
+        if (notification.getSendAt() != null) {
             text.add("✅ Время");
         } else {
             text.add("❌ Время");
@@ -340,9 +342,9 @@ public class NotificationManager extends AbstractManager
                 text,
                 List.of(2, 1, 2),
                 List.of(
-                        notification_edit_title_.name() + id, notification_edit_time_.name() + id,
-                        notification_edit_d_.name() + id,
-                        main.name(), notification_done_.name() + id
+                        NOTIFICATION_EDIT_TITLE.name() + "_" + id, NOTIFICATION_EDIT_TIME.name() + "_" + id,
+                        NOTIFICATION_EDIT_D.name() + "_" + id,
+                        MAIN.name(), NOTIFICATION_DONE.name() + "_" + id
                 )
         );
     }

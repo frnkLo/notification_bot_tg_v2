@@ -5,59 +5,60 @@ import com.secondbot.notification_bot.entity.Notification;
 import com.secondbot.notification_bot.entity.Status;
 import com.secondbot.notification_bot.repository.NotificationRepo;
 import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-@Slf4j
-@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
-public class NotificationContainer implements Runnable {
+import java.time.LocalDateTime;
+import java.util.List;
 
+@Service
+@Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
+public class NotificationContainer {
     Bot bot;
-    Long chatId;
-    Notification notification;
     NotificationRepo notificationRepo;
 
-    public NotificationContainer(
-            Bot bot,
-            Long chatId,
-            Notification notification,
-            NotificationRepo notificationRepo
-    ) {
-        this.bot = bot;
-        this.chatId = chatId;
-        this.notification = notification;
-        this.notificationRepo = notificationRepo;
-    }
+    private static final String REMINDER = "⚡️\uFE0F Напоминание: ";
+    private static final String REMINDER_EMOJI = "❗️\uFE0F ";
 
-    @Override
-    public void run() {
-        try {
-            Thread.sleep(notification.getSeconds() * 1000);
-        } catch (InterruptedException e) {
-            log.error(e.getMessage());
+    @Scheduled(fixedDelay = 10000)
+    public void checkAndSendNotifications() {
+
+        List<Notification> pendingNotifications = notificationRepo
+                .findAllByStatusAndSendAtBefore(Status.WAITING, LocalDateTime.now());
+
+        if (pendingNotifications.isEmpty()) {
+            return;
         }
-        try {
-            bot.execute(
-                    sendNotification()
-            );
-        } catch (TelegramApiException e) {
-            log.error(e.getMessage());
+
+        for (Notification notification : pendingNotifications) {
+            try {
+                bot.execute(
+                        SendMessage.builder()
+                                .chatId(notification.getUser().getChatId())
+                                .text(REMINDER + notification.getTitle() + "\n"
+                                        + REMINDER_EMOJI + notification.getDescription() + "\n\n")
+                                .build()
+                );
+
+
+                notification.setStatus(Status.FINISHED);
+                notificationRepo.save(notification);
+
+            } catch (TelegramApiException e) {
+                log.error("Ошибка при отправке уведомления {}: {}", notification.getId(), e.getMessage());
+
+                notification.setStatus(Status.FINISHED);
+                notificationRepo.save(notification);
+
+            }
         }
-        notification.setStatus(Status.FINISHED);
-        notificationRepo.save(notification);
     }
-
-    private BotApiMethod<?> sendNotification() {
-        return SendMessage.builder()
-                .chatId(chatId)
-                .text(
-                        "⚡\uFE0F Напоминание: " + notification.getTitle() + "\n"
-                                + "❗\uFE0F " + notification.getDescription() + "\n\n"
-                )
-                .build();
-    }
-
 }
+

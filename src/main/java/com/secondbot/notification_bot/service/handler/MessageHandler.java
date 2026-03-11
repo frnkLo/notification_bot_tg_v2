@@ -18,12 +18,16 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class MessageHandler extends AbstractHandler {
+
     UserRepo userRepo;
     NotificationManager notificationManager;
+
+
     @Override
     public BotApiMethod<?> answer(BotApiObject object, Bot bot) throws TelegramApiException {
         var message = (Message) object;
         var user = userRepo.findByChatId(message.getChatId());
+
         switch (user.getAction()) {
             case FREE -> {
                 return null;
@@ -32,6 +36,7 @@ public class MessageHandler extends AbstractHandler {
                 return notificationManager.answerMessage(message, bot);
             }
         }
+
         throw new UnsupportedOperationException();
     }
 }

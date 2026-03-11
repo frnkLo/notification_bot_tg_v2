@@ -2,9 +2,13 @@ package com.secondbot.notification_bot.data;
 
 public enum  CallbackData {
 
-    main,
-
-    notification_main, notification_new, notification_edit_title_, notification_edit_d_, notification_edit_time_,
-    notification_done_, notification_back_
+    MAIN,
+    NOTIFICATION_MAIN,
+    NOTIFICATION_NEW,
+    NOTIFICATION_EDIT_TITLE,
+    NOTIFICATION_EDIT_D,
+    NOTIFICATION_EDIT_TIME,
+    NOTIFICATION_DONE,
+    NOTIFICATION_BACK
 
 }

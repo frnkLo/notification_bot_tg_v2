@@ -17,7 +17,8 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.util.List;
 
-import static com.secondbot.notification_bot.data.CallbackData.notification_main;
+import static com.secondbot.notification_bot.data.CallbackData.NOTIFICATION_MAIN;
+
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +42,7 @@ public class MainManager extends AbstractManager implements CommandListener, Que
                         keyboardFactory.createInlineKeyboard(
                                 List.of("жмякай"),
                                 List.of(1),
-                                List.of(notification_main.name())
+                                List.of(NOTIFICATION_MAIN.name())
                         )
                 )
                 .build();
@@ -56,7 +57,7 @@ public class MainManager extends AbstractManager implements CommandListener, Que
                         keyboardFactory.createInlineKeyboard(
                                 List.of("жмякай"),
                                 List.of(1),
-                                List.of(notification_main.name())
+                                List.of(NOTIFICATION_MAIN.name())
                         )
                 )
                 .build();

@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Builder
@@ -25,8 +27,8 @@ public class Notification extends AbstractEntity {
     @Enumerated(EnumType.STRING)
     Status status;
 
-    @Column(name = "seconds")
-    Integer seconds;
+    @Column(name = "time")
+    LocalDateTime sendAt;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

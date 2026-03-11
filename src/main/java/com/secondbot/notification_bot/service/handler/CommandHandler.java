@@ -15,13 +15,15 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,  makeFinal = true)
 public class CommandHandler extends AbstractHandler {
-    MainManager mainManager;
 
+    public static final String COMMAND_START = "/start";
+
+    MainManager mainManager;
 
     @Override
     public BotApiMethod<?> answer(BotApiObject object, Bot bot) {
         var message = (Message) object;
-        if ("/start".equals(message.getText())) {
+        if (COMMAND_START.equals(message.getText())) {
             return mainManager.answerCommand(message, bot);
         }
         throw new UnsupportedOperationException();

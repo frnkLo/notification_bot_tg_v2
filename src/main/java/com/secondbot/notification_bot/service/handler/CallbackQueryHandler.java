@@ -18,6 +18,10 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CallbackQueryHandler extends AbstractHandler {
+
+    public static final String CALLBACK_NOTIFICATION = "NOTIFICATION";
+    public static final String CALLBACK_MAIN = "MAIN";
+
     NotificationManager notificationManager;
     MainManager  mainManager;
 
@@ -26,14 +30,15 @@ public class CallbackQueryHandler extends AbstractHandler {
         var query = (CallbackQuery) object;
         String[] words = query.getData().split("_");
         switch (words[0]) {
-            case "notification" -> {
+            case CALLBACK_NOTIFICATION -> {
                 return notificationManager.answerQuery(query, words, bot);
             }
-            case "main" -> {
+            case CALLBACK_MAIN -> {
                 return mainManager.answerQuery(query, words, bot);
             }
+            default ->
+                throw new UnsupportedOperationException("Неизвестный callback data: " + words[0]);
 
         }
-        throw new UnsupportedOperationException();
     }
 }
